@@ -41,6 +41,7 @@ def make_arbitrary_topo_smooth(total_fluid_depth,cR,W,Wsb,L,p,x,x_wall,y,y_base,
   
   # Slope profile is the topography without the canyon
   slope_profile = tanktopo(total_fluid_depth,y,y_base,y_bc,y_sb,y_coast,z_bottom,z_bc,z_sb,z_wall)
+  
   # Canyon Profile defines the slope of the canyon
   canyon_profile = canyontopo(total_fluid_depth,L,y,y_sb,y_coast,z_sb,z_wall)
   
@@ -58,8 +59,8 @@ def make_arbitrary_topo_smooth(total_fluid_depth,cR,W,Wsb,L,p,x,x_wall,y,y_base,
   for j in np.arange(len(x)):
     # the width profile here is in m but in the python code it is in cm and
     # the coefficient is 45.5 instead of 0.455 I changed it so the units would work
-    topography[:,j] = (slope_profile-canyondepth*(1.0/np.cosh(0.455/width_profile*(x[j]-(0.5*x_wall))))**50);
-    
+    topography[:,j] = (slope_profile-canyondepth*(1.0/(np.cosh(0.455/width_profile*(x[j]-(0.5*x_wall))))**50))
+   
   # Transposing the topography so that it is the same order as fortran reads
   # If this is not done the grid will not look right when implemented into the gcm
   topography=np.transpose(topography)
@@ -104,8 +105,8 @@ def tanktopo(total_fluid_depth,y,y_base,y_bc,y_sb,y_coast,z_bottom,z_bc,z_sb,z_w
       topo_sp[jj] = z_wall
                 
   # subtract total fluid depth
-  slope_profile[jj] = topo_sp[jj]-total_fluid_depth
-   
+    slope_profile[jj] = topo_sp[jj]-total_fluid_depth
+  
   return slope_profile
    
 def canyontopo(total_fluid_depth,L,y,y_sb,y_coast,z_sb,z_wall):
