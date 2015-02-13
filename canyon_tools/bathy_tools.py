@@ -120,7 +120,7 @@ def canyontopo(total_fluid_depth,L,y,y_sb,y_coast,z_sb,z_wall):
   y_L = y_sb+L 
   yc_1100 = 51220
   yc_1000 = 54030
-  yc_1200 = 50500
+  yc_1200 = 40000 #50500
     
   for ii in np.arange(len(y)):
     
