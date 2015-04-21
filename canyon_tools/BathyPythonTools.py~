@@ -120,7 +120,7 @@ def canyontopo(total_fluid_depth,L,y,y_sb,y_coast,z_sb,z_wall):
   y_L = y_sb+L 
   yc_1100 = 51220
   yc_1000 = 54030
-  yc_1200 = 40700 #48650 NWcanyon #40700 Barkley, 50500 Jessica's
+  yc_1200 = 40700 #48650 NWcanyon #40000 Barkley, 50500 Jessica's
     
   for ii in np.arange(len(y)):
     
