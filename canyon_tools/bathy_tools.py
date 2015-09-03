@@ -259,3 +259,49 @@ def make_two_canyons_smooth(total_fluid_depth,cR,W,Wsb,L,p,x,x_wall,y,y_base,y_b
   topography=np.transpose(topography)
    
   return topography
+
+def make_flat_shelf(total_fluid_depth,cR,W,Wsb,L,p,x,x_wall,y,y_base,y_bc,y_sb,y_coast,z_bottom,z_bc,z_sb,z_wall):
+  """This function was originally written for python, then translated to matlab. I took the matlab version form Jessica Spurgin's files for MITgcm:
+  This is a function that will return a depth field (topography) of a shelf without a canyon.
+  input: 
+              total_fluid_depth = the depth of the fluid or the total depth
+	      y_wall = the length of the ocean basin (y-axis)(going from 0=deep ocean m high values = coast
+               x_wall = the width of the ocean basin (x-axis)
+	      y_base = the distance where the slope begins to rise from the bottom
+		    y_bc = the distance to the canyon mouth
+		    y_sb = the distance of the shelf break
+		  y_100 = the distance to the 100m isobath
+		    y_50 = the distance to the 50m isobath
+		    y_coast = the distance to the "coast" where topography stops increasing, but 	depth NOT =0
+	      z_bottom = depth of the "deep ocean"; z is measured from the bottom up
+	      z_bc = depth of the 1000 m contour
+			z_800 = depth of the 800 m contour
+			z_600 = depth of the 600 m contour
+			z_400 = depth of the 400 m contour
+			z_200 = depth of the 200 m contour
+		    z_sb = shelf break depth (150m)
+		  z_100 = depth of the 100 m contour
+			  z50 = depth of the 50 m contour
+		  z_wall = the depth of the topography beyond the y_coast variable (i.e. z_wall NOT = total fluid depth)
+		      cR = the radius of curvature at the shelf break depth
+		      W = the width at half the length at the shelf break depth
+		    Wsb = the width at the shelf break
+		      L = the length of the canyon
+		    p,q = geometric parameters used to help shape the canyon see geometry.ods	    """
+  
+  # Slope profile is the topography without the canyon
+  slope_profile = tanktopo(total_fluid_depth,y,y_base,y_bc,y_sb,y_coast,z_bottom,z_bc,z_sb,z_wall)
+  
+  topography = np.zeros((len(y),len(x)))
+  
+  for j in np.arange(len(x)):
+    # the width profile here is in m but in the python code it is in cm and
+    # the coefficient is 45.5 instead of 0.455 I changed it so the units would work
+    topography[:,j] = (slope_profile)
+   
+  # Transposing the topography so that it is the same order as fortran reads
+  # If this is not done the grid will not look right when implemented into the gcm
+  topography=np.transpose(topography)
+   
+  return topography
+
