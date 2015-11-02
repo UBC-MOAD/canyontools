@@ -35,7 +35,8 @@ def findShelfBreak(zlev,hfac):
     SBIndy = np.empty(nx)
 
     for kk in range(nx):
-        SBIndy[kk] = np.argmax(hfac[zlev,:,kk]!=1)
+        #SBIndy[kk] = np.argmax(hfac[zlev,:,kk]!=1) # use this for old grid
+        SBIndy[kk] = np.argmax(hfac[zlev,:,kk] < 0.96)  # use this for quad grid
         SBIndx[kk] = kk
 
     #SBIndy[kk+1] = 216    # Since I changed the condition, I don't need these extra points anymore
@@ -58,13 +59,15 @@ def findShelfBreak(zlev,hfac):
     
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def MerFluxSB(time,Flux,z,x,zlev,hfac,Mask):
+def MerFluxSB(SBxx,SByy,time,Flux,z,x,zlev,hfac,Mask):
     '''Flux across shelf break - This function uses fingShelfBreak to get the indices of the cells along the shelf break 
     (with or without canyon) and returns a (nz,nx) array with the flux across those cells from bottom to surface. The flux 
     should be normal to the shelf break, so only the meridional component of flux is used. This function can also work 
     for transport.
      -------------------------------------------------------------------------------------------------------------------
-     INPUT: time -  time output 
+     INPUT: 
+	    SBxx,SByy - indices od SB from findShelfBreak function
+	    time -  time output 
             Flux - array with meridional flux data from MITgcm model. The shape should be (nt,nz,ny,nx)
             z - 1D array with z-level depth data
             x - alongshore coordinates (2D)
@@ -99,23 +102,22 @@ def MerFluxSB(time,Flux,z,x,zlev,hfac,Mask):
     
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def ZonFluxSB(time,Flux,z,x,zlev,hfac,Mask):
+def ZonFluxSB(SBxx,SByy,time,Flux,z,x,zlev,hfac,Mask):
     '''Zonal Flux across shelf break - This function uses fingShelfBreak to get the indices of the cells along the shelf break 
     (with or without canyon) and returns a (nz,nx) array with the flux across those cells from bottom to surface. This function can also work 
     for transport.
-     -------------------------------------------------------------------------------------------------------------------
-     INPUT: time -  time output 
+     ----------------------------------------------------------------------------------------------------------------------------
+     INPUT: 
+	    SBxx,SByy - indices od SB from findShelfBreak function
+	    time -  time output 
             Flux - array with zonal flux data from MITgcm model. The shape should be (nt,nz,ny,nx)
             z - 1D array with z-level depth data
             x - alongshore coordinates (2D)
             hfac - open cell fraction that works as mask
             zlev - vertical level at which to get the shelf break indices
     OUTPUT : array [nz,nx] with flux values across shelfbreak
-    ----------------------------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------------------
     '''
-    
-    SBxx, SByy = findShelfBreak(zlev,hfac)
-
     sizeX = np.shape(SBxx)
     sizes = np.shape(hfac)
     
@@ -197,7 +199,8 @@ def contourfFluxSB(time,numCols,numRows,FluxPlot,z,x,units, nzmin,nzmax,kk,zlev)
     ax = plt.gca()
 
     ax.set_axis_bgcolor((205/255.0, 201/255.0, 201/255.0))
-    plt.contourf(range(nx),z[nzmin:nzmax],FluxPlot[nzmin:nzmax,:],cmap = "RdYlBu_r")
+    plt.contourf(x[1,4:360-5],z[nzmin:nzmax],FluxPlot[nzmin:nzmax,:],cmap = "RdYlBu_r")
+    
 
     if abs(np.max(FluxPlot)) >= abs(np.min(FluxPlot)):
         pl.clim([-np.max(FluxPlot),np.max(FluxPlot)])
@@ -205,8 +208,8 @@ def contourfFluxSB(time,numCols,numRows,FluxPlot,z,x,units, nzmin,nzmax,kk,zlev)
         pl.clim([np.min(FluxPlot),-np.min(FluxPlot)])
     
     
-    plt.axvline(x=120,linestyle='-', color='0.75')
-    plt.axvline(x=240,linestyle='-', color='0.75')
+    plt.axvline(x=x[1,120],linestyle='-', color='0.75')
+    plt.axvline(x=x[1,240],linestyle='-', color='0.75')
     
     plt.xlabel('Along-shelfbreak index')
         
@@ -236,19 +239,22 @@ def pcolorFluxSB(time,numCols,numRows,FluxPlot,z,x,units, nzmin,nzmax,kk,zlev):
     OUTPUT : Nice pcolor subplot
     ----------------------------------------------------------------------------------------------------------------------
     '''
+    sizes = np.shape(FluxPlot)
+    nx = sizes[1]
+    
     plt.subplot(numRows,numCols,kk)
     ax = plt.gca()
 
     ax.set_axis_bgcolor((205/255.0, 201/255.0, 201/255.0))
-    plt.pcolor(range(nx),z[nzmin:nzmax],FluxPlot[nzmin:nzmax,:],cmap = "RdYlBu_r")
+    plt.pcolor(x[1,4:360-5],z[nzmin:nzmax],FluxPlot[nzmin:nzmax,:],cmap = "RdYlBu_r")
 
     if abs(np.max(FluxPlot)) >= abs(np.min(FluxPlot)):
         pl.clim([-np.max(FluxPlot),np.max(FluxPlot)])
     else:
         pl.clim([np.min(FluxPlot),-np.min(FluxPlot)])
     
-    plt.axvline(x=120,linestyle='-', color='0.75')
-    plt.axvline(x=240,linestyle='-', color='0.75')
+    plt.axvline(x=x[1,120],linestyle='-', color='0.75')
+    plt.axvline(x=x[1,240],linestyle='-', color='0.75')
     
    
     plt.ylabel('m')
@@ -308,8 +314,8 @@ def findSlope(x,y,SBx,SBy):
   angle : arctan(slope) 
   '''
    
-  deltaX = xc[SByy[8:],SBxx[8:]]-xc[SByy[:-8],SBxx[:-8]] # x2-x1
-  deltaY = yc[SByy[8:],SBxx[8:]]-yc[SByy[:-8],SBxx[:-8]] # y2-y1
+  deltaX = x[SBy[8:],SBx[8:]]-x[SBy[:-8],SBx[:-8]] # x2-x1
+  deltaY = y[SBy[8:],SBx[8:]]-y[SBy[:-8],SBx[:-8]] # y2-y1
   
   slope = deltaY/deltaX
   
