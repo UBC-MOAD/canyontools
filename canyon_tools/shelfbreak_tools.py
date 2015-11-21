@@ -48,7 +48,7 @@ def findShelfBreak(zlev,hfac):
     SBx = SBIndx.astype(int)
     SBy = SBIndy.astype(int)
     
-    ind = np.argsort(SBx)    # make sure they are correctly sorted in ascending order - this is important to calculate slpoes later
+    ind = np.argsort(SBx)    # make sure they are correctly sorted in ascending order - this is important to calculate slopes later
     
     sortSBx = SBx[ind]
     sortSBy = SBy[ind]
@@ -60,13 +60,13 @@ def findShelfBreak(zlev,hfac):
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 def MerFluxSB(SBxx,SByy,time,Flux,z,x,zlev,hfac,Mask):
-    '''Flux across shelf break - This function uses fingShelfBreak to get the indices of the cells along the shelf break 
+    '''Flux across shelf break - This function uses findShelfBreak to get the indices of the cells along the shelf break 
     (with or without canyon) and returns a (nz,nx) array with the flux across those cells from bottom to surface. The flux 
     should be normal to the shelf break, so only the meridional component of flux is used. This function can also work 
     for transport.
      -------------------------------------------------------------------------------------------------------------------
      INPUT: 
-	    SBxx,SByy - indices od SB from findShelfBreak function
+	    SBxx,SByy - indices of SB from findShelfBreak function
 	    time -  time output 
             Flux - array with meridional flux data from MITgcm model. The shape should be (nt,nz,ny,nx)
             z - 1D array with z-level depth data
@@ -133,6 +133,84 @@ def ZonFluxSB(SBxx,SByy,time,Flux,z,x,zlev,hfac,Mask):
     for index in zip(SBxx,SByy):
         #print(index)
         FluxX[:,kk] = unstagFlux[time,:,index[1],index[0]] 
+        MaskX[:,kk] = Mask[:,index[1],index[0]]
+        kk = kk+1
+
+    FluxXmask = np.ma.array(FluxX,mask=MaskX)
+    return(FluxXmask)
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+def MerFluxSBNoUnstag(SBxx,SByy,time,Flux,z,x,zlev,hfac,Mask):
+    '''Flux across shelf break No Unstagger - This function uses fingShelfBreak to get the indices of the cells along the shelf break 
+    (with or without canyon) and returns a (nz,nx) array with the flux across those cells from bottom to surface. The flux 
+    should be normal to the shelf break, so only the meridional component of flux is used. The flux should be unstaggered into C grid. This function can also work 
+    for transport.
+     -------------------------------------------------------------------------------------------------------------------
+     INPUT: 
+	    SBxx,SByy - indices od SB from findShelfBreak function
+	    time -  time output 
+            Flux - array with meridional flux data from MITgcm model. The shape should be (nt,nz,ny,nx)
+            z - 1D array with z-level depth data
+            x - alongshore coordinates (2D)
+            hfac - open cell fraction that works as mask
+            zlev - vertical level at which to get the shelf break indices
+    OUTPUT : array [nz,nx] with flux values across shelfbreak
+    ----------------------------------------------------------------------------------------------------------------------
+    '''
+    
+    SBxx, SByy = findShelfBreak(zlev,hfac)
+
+    sizeX = np.shape(SBxx)
+    sizes = np.shape(hfac)
+    
+    nx = sizeX[0]
+    nz = sizes[0]
+    
+    FluxY = np.empty((nz,nx))
+    MaskY = np.empty((nz,nx))
+
+    kk = 0
+    for index in zip(SBxx,SByy):
+        #print(index)
+        FluxY[:,kk] = Flux[time,:,index[1],index[0]] 
+        MaskY[:,kk] = Mask[:,index[1],index[0]]
+        kk = kk+1
+
+    FluxYmask = np.ma.array(FluxY,mask=MaskY)
+    return(FluxYmask)
+    
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+def ZonFluxSBNoUnstag(SBxx,SByy,time,Flux,z,x,zlev,hfac,Mask):
+    '''Zonal Flux across shelf break - This function uses fingShelfBreak to get the indices of the cells along the shelf break 
+    (with or without canyon) and returns a (nz,nx) array with the flux across those cells from bottom to surface. The flux should be unstaggered into C grid. This function can also work 
+    for transport.
+     ----------------------------------------------------------------------------------------------------------------------------
+     INPUT: 
+	    SBxx,SByy - indices od SB from findShelfBreak function
+	    time -  time output 
+            Flux - array with zonal flux data from MITgcm model. The shape should be (nt,nz,ny,nx)
+            z - 1D array with z-level depth data
+            x - alongshore coordinates (2D)
+            hfac - open cell fraction that works as mask
+            zlev - vertical level at which to get the shelf break indices
+    OUTPUT : array [nz,nx] with flux values across shelfbreak
+    -----------------------------------------------------------------------------------------------------------------------------
+    '''
+    sizeX = np.shape(SBxx)
+    sizes = np.shape(hfac)
+    
+    nx = sizeX[0]
+    nz = sizes[0]
+    
+    FluxX = np.empty((nz,nx))
+    MaskX = np.empty((nz,nx))
+
+    
+    kk = 0
+    for index in zip(SBxx,SByy):
+        #print(index)
+        FluxX[:,kk] = Flux[time,:,index[1],index[0]] 
         MaskX[:,kk] = Mask[:,index[1],index[0]]
         kk = kk+1
 
@@ -265,10 +343,11 @@ def pcolorFluxSB(time,numCols,numRows,FluxPlot,z,x,units, nzmin,nzmax,kk,zlev):
 
     plt.title(" %1.1f days " % ((tt/2.)+0.5))
 
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 
+ # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def AreaWallSB(hfac,dr,dx,zlev):
-    '''Calculate area of Shelf break wall.
+def AreaXface(hfac,dr,dx,zlev):
+    '''Calculate area of Shelf break wall across x axis - perpendicular to y component of vel.
     -----------------------------------------------------------------------------------
     INPUT
     hfac : Fraction of open cell at cell center (hFacC)     
@@ -295,7 +374,38 @@ def AreaWallSB(hfac,dr,dx,zlev):
         area[:,ii] = hfac[:,SByy[ii],SBxx[ii]] * dr[:] * dx[SByy[ii],SBxx[ii]]
    
     return(area)
+
+ # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+def AreaYface(hfac,dr,dy,zlev):
+    '''Calculate area of Shelf break wall across y axis - perpendicular to x component of vel.
+    -----------------------------------------------------------------------------------
+    INPUT
+    hfac : Fraction of open cell at cell center (hFacC)     
+    dr : r cell face separation (drf)
+    dy : y cell center separation (dyf)
+    zlev : vertical level to find shelf break indices
     
+    NOTE - This function uses findShelfBreak(zlev,hfac) to get the x, y indices of shelf break.
+    
+    OUTPUT
+    area : np 2D array size x,z 
+    '''
+    
+    SBxx, SByy = findShelfBreak(zlev,hfac)
+
+    sizes = np.shape(hfac)
+    nx = sizes[2]
+    ny = sizes[1]
+    nz = sizes[0]
+    
+    area = np.empty((nz,nx))
+    
+    for ii in range(nx):
+        area[:,ii] = hfac[:,SByy[ii],SBxx[ii]] * dr[:] * dy[SByy[ii],SBxx[ii]]
+   
+    return(area)
+   
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 def findSlope(x,y,SBx,SBy):
