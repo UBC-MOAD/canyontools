@@ -181,23 +181,6 @@ def howMuchWaterCV(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xo,xf):
     
     return (VolWaterHighConc, Total_Tracer)
 
-#---------------------------------------------------------------------------------------------------------------------------
-
-def dumpFiles(filename,variable,form = 'dump'):
-    
-    '''Filename is a string with the path,filename and extension to write into; variable is the np array to save 
-    and form is the file format to save to, it can be either 'dump' which uses np.ma.dump or 'txt' for a regular 
-    text file. To load the arrays use np.load(filename)'''
-     
-    if form == 'dump':
-        np.ma.dump(variable,filename)
-    elif form == 'txt':
-        np.savetxt(filename, variable)
-    else:
-        print('Format has to be dump or txt')
-        
-    
-#---------------------------------------------------------------------------------------------------------------------------
 
 
 
