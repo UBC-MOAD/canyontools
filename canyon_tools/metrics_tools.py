@@ -124,10 +124,12 @@ def howMuchWaterX(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi):
     
   return (VolWaterHighConc, Total_Tracer)
 
-#---------------------------------------------------------------------------------------------------------------------------
+  #---------------------------------------------------------------------------------------------------------------------------
+
+
 def howMuchWaterCV(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xo,xf):
   '''
-    INPUT----------------------------------------------------------------------------------------------------------------
+  INPUT----------------------------------------------------------------------------------------------------------------
     Tr    : Array with concentration values for a tracer. Until this function is more general, this should be size 19x90x360x360
     MaskC : Land mask for tracer
     nzlim : The nz index under which to look for water properties
@@ -138,14 +140,13 @@ def howMuchWaterCV(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xo,xf):
     zfin  : shelf break index + 1 
     xi    : initial profile x index
     yi    : initial profile y index
-    xo : initial x index of control volume
-    xf : final x index of control volume
+    xo,xf : x indices of control volume
     OUTPUT----------------------------------------------------------------------------------------------------------------
-    VolWaterHighConc =  Array with the volume of water over the shelf [:,:30,227:,:] at every time output.
+    VolWaterHighConc =  Array with the volume of water over the shelf wothout the cube on top of the canyon at every time output.
     Total_Tracer =  Array with the mass of tracer (m^3*[C]*l/m^3) at each x-position over the shelf [:,:30,227:,:] at 
-                    every time output. Total mass of tracer at xx on the shelf.
+                    every time output. Total mass of tracer at xx on the shelf without the cube on top of the canon.
                                                 
-    -----------------------------------------------------------------------------------------------------------------------
+  -----------------------------------------------------------------------------------------------------------------------
   '''
   maskExp = maskExpand(MaskC,Tr)
 
@@ -157,7 +158,7 @@ def howMuchWaterCV(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xo,xf):
     
   WaterX = 0
     
-  # mask cells with tracer concentration < trlim on control volume
+  # mask cells with tracer concentration < trlim on shelf
   HighConc_Masked = np.ma.masked_less(TrMask[:,:zfin,yin:,xo:xf], trlim) 
   HighConc_Mask = HighConc_Masked.mask
     
@@ -174,11 +175,100 @@ def howMuchWaterCV(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xo,xf):
   HighConc_CellVol = np.ma.masked_array(ShelfVolume_exp,mask = HighConc_Mask) 
   VolWaterHighConc = np.ma.sum(np.ma.sum(np.ma.sum(HighConc_CellVol,axis = 1),axis=1),axis=1)
     
-    #Get total mass of tracer on shelf
+   #Get total mass of tracer on shelf
   Total_Tracer = np.ma.sum(np.ma.sum(np.ma.sum(ShelfVolume_exp*TrMask[:,:zfin,yin:,xo:xf]*1000.0,axis = 1),axis=1),axis=1) 
-    # 1 m^3 = 1000 l
+   # 1 m^3 = 1000 l
     
   return (VolWaterHighConc, Total_Tracer)
+  
+  
+  
+#---------------------------------------------------------------------------------------------------------------------------
+def howMuchWaterShwHole(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xh1=120,xh2=240,yh1=227,yh2=267):
+  '''
+    INPUT----------------------------------------------------------------------------------------------------------------
+    Tr    : Array with concentration values for a tracer. Until this function is more general, this should be size 19x90x360x360
+    MaskC : Land mask for tracer
+    nzlim : The nz index under which to look for water properties
+    rA    : Area of cell faces at C points (360x360)
+    fFacC : Fraction of open cell (90x360x360)
+    drF   : Distance between cell faces (90)
+    yin   : across-shore index of shelf break
+    zfin  : shelf break index + 1 
+    xi    : initial profile x index
+    yi    : initial profile y index
+    xh1=120 : 1st x index of hole (defaults are the definitions used for transport calculations)
+    xh2=240 : 2nd x index of hole
+    yh1=227 : 1st y index of hole
+    yh2=267 : 2nd y index of hole
+    
+    OUTPUT----------------------------------------------------------------------------------------------------------------
+    VolWaterHighConc =  Array with the volume of water over the shelf [:,:30,227:,:] at every time output.
+    Total_Tracer =  Array with the mass of tracer (m^3*[C]*l/m^3) at each x-position over the shelf [:,:30,227:,:] at 
+                    every time output. Total mass of tracer at xx on the shelf.
+    VolWaterHighConcHole =  Array with the volume of water insde cube at every time output.
+    Total_TracerHole =  Array with the mass of tracer inside hole.
+                                               
+    -----------------------------------------------------------------------------------------------------------------------
+  '''
+  maskExp = maskExpand(MaskC,Tr)
+
+  TrMask=np.ma.array(Tr,mask=maskExp)   
+    
+  trlim = TrMask[0,nzlim,yi,xi]
+    
+  print('tracer limit concentration is: ',trlim)
+    
+  WaterX = 0
+    
+  # mask cells with tracer concentration < trlim on control volume
+  HighConc_Masked = np.ma.masked_less(TrMask[:,:zfin,yin:,:], trlim) 
+  HighConc_Mask = HighConc_Masked.mask
+    
+  HighConcHole_Masked = np.ma.masked_less(TrMask[:,:zfin,yh1:yh2,xh1:xh2], trlim) 
+  HighConcHole_Mask = HighConcHole_Masked.mask
+  
+  
+  #Get volume of water of cells with relatively high concentration
+  rA_exp = np.expand_dims(rA[yin:,:],0)
+  rA_exp_hole = np.expand_dims(rA[yh1:yh2,xh1:xh2],0)
+  
+  rA_exp = rA_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+  rA_exp_hole = rA_exp_hole + np.zeros(hFacC[:zfin,yh1:yh2,xh1:xh2].shape)
+ 
+  drF_exp = np.expand_dims(np.expand_dims(drF[:zfin],1),1)
+  drF_exp_hole = np.expand_dims(np.expand_dims(drF[:zfin],1),1)
+  
+  drF_exp = drF_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+  drF_exp_hole = drF_exp_hole +np.zeros(hFacC[:zfin,yh1:yh2,xh1:xh2].shape)
+  
+   
+  ShelfVolume = hFacC[:zfin,yin:,:]*drF_exp*rA_exp
+  ShelfVolume_exp = np.expand_dims(ShelfVolume,0)
+  ShelfVolume_exp = ShelfVolume_exp + np.zeros(HighConc_Mask.shape)
+    
+  HoleVolume = hFacC[:zfin,yh1:yh2,xh1:xh2]*drF_exp_hole*rA_exp_hole
+  HoleVolume_exp = np.expand_dims(HoleVolume,0)
+  HoleVolume_exp = HoleVolume_exp + np.zeros(HighConcHole_Mask.shape)
+  
+  
+  HighConc_CellVol = np.ma.masked_array(ShelfVolume_exp,mask = HighConc_Mask) 
+  HighConc_CellVol_Hole = np.ma.masked_array(HoleVolume_exp,mask = HighConcHole_Mask) 
+  
+  VolWaterHighConc = np.ma.sum(np.ma.sum(np.ma.sum(HighConc_CellVol,axis = 1),axis=1),axis=1)
+  VolWaterHighConcHole = np.ma.sum(np.ma.sum(np.ma.sum(HighConc_CellVol_Hole,axis = 1),axis=1),axis=1)
+  
+  VolWaterHighConcShelfwHole = VolWaterHighConc-VolWaterHighConcHole
+  
+  #Get total mass of tracer on shelf
+  Total_Tracer = np.ma.sum(np.ma.sum(np.ma.sum(ShelfVolume_exp*TrMask[:,:zfin,yin:,:]*1000.0,axis = 1),axis=1),axis=1) 
+  Total_Tracer_Hole = np.ma.sum(np.ma.sum(np.ma.sum(HoleVolume_exp*TrMask[:,:zfin,yh1:yh2,xh1:xh2]*1000.0,axis = 1),axis=1),axis=1) 
+  
+  Total_Tracer_ShelfwHole = Total_Tracer-Total_Tracer_Hole
+  
+  # 1 m^3 = 1000 l
+    
+  return (VolWaterHighConcShelfwHole, Total_Tracer_ShelfwHole,VolWaterHighConcHole,Total_Tracer_Hole)
 
 
 #----------------------------------------------------------------------------------------------------------------------------
