@@ -219,8 +219,7 @@ def howMuchWaterShwHole(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xh1=120,xh2=2
     
   print('tracer limit concentration is: ',trlim)
     
-  WaterX = 0
-    
+  
   # mask cells with tracer concentration < trlim on control volume
   HighConc_Masked = np.ma.masked_less(TrMask[:,:zfin,yin:,:], trlim) 
   HighConc_Mask = HighConc_Masked.mask
@@ -301,7 +300,89 @@ def slice_TRAC(field,i1,i2,j1,j2,k1,k2,t1,t2):
   
 #---------------------------------------------------------------------------------------------------------------------------------  
   
+def slice_area(dx,dr,rA,hFacC,i1,i2,j1,j2,k1,k2):
+  '''i1,j1,k1 initial indices of slice, i2,j2,k2 final indices. dx is dy when the slice is AS1 or AS2.'''
+  if i1 == i2:
+    
+    dr_exp = np.expand_dims(dr[k1:k2],1)
+    dr_exp = dr_exp + np.zeros(hFacC[k1:k2,j1:j2,i1].shape)
   
+    dx_exp = np.expand_dims(dx[j1:j2,i1],0)
+    dx_exp = dx_exp + np.zeros(hFacC[k1:k2,j1:j2,i1].shape)
+    
+    area = hFacC[k1:k2,j1:j2,i1]*dx_exp*dr_exp
+  
+  
+  elif j1==j2:
+    
+    dr_exp = np.expand_dims(dr[k1:k2],1)
+    dr_exp = dr_exp + np.zeros(hFacC[k1:k2,j1,i1:i2].shape)
+  
+    dx_exp = np.expand_dims(dx[j1,i1:i2],0)
+    dx_exp = dx_exp + np.zeros(hFacC[k1:k2,j1,i1:i2].shape)
+   
+    area = hFacC[k1:k2,j1,i1:i2]*dx_exp*dr_exp
+  
+  else:
+    
+    rA_exp = np.expand_dims(rA[j1:j2,i1:i2],0)
+  
+    rA_exp = rA_exp + np.zeros(hFacC[k1,j1:j2,i1:i2].shape)
+  
+    area = hFacC[k1,j1:j2,i1:i2]*rA_exp
+  
+  return area
+  
+#---------------------------------------------------------------------------------------------------------------------------------  
+  
+ #---------------------------------------------------------------------------------------------------------------------------
+def Volume_Sh_and_Hole(MaskC,rA,hFacC,drF,yin,zfin,xh1=120,xh2=240,yh1=227,yh2=267):
+  '''
+    INPUT----------------------------------------------------------------------------------------------------------------
+    MaskC : Land mask for tracer
+     rA    : Area of cell faces at C points (360x360)
+    fFacC : Fraction of open cell (90x360x360)
+    drF   : Distance between cell faces (90)
+    yin   : across-shore index of shelf break
+    zfin  : shelf break index + 1 
+    xh1=120 : 1st x index of hole (defaults are the definitions used for transport calculations)
+    xh2=240 : 2nd x index of hole
+    yh1=227 : 1st y index of hole
+    yh2=267 : 2nd y index of hole
+    
+    OUTPUT----------------------------------------------------------------------------------------------------------------
+    Canyon box volume and Shelf with hole volume                                           
+    -----------------------------------------------------------------------------------------------------------------------
+  '''
+   
+  rA_exp = np.expand_dims(rA[yin:,:],0)
+  rA_exp_hole = np.expand_dims(rA[yh1:yh2,xh1:xh2],0)
+  
+  rA_exp = rA_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+  rA_exp_hole = rA_exp_hole + np.zeros(hFacC[:zfin,yh1:yh2,xh1:xh2].shape)
+ 
+  drF_exp = np.expand_dims(np.expand_dims(drF[:zfin],1),1)
+  drF_exp_hole = np.expand_dims(np.expand_dims(drF[:zfin],1),1)
+  
+  drF_exp = drF_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+  drF_exp_hole = drF_exp_hole +np.zeros(hFacC[:zfin,yh1:yh2,xh1:xh2].shape)
+  
+   
+  ShelfVolume = hFacC[:zfin,yin:,:]*drF_exp*rA_exp
+  HoleVolume = hFacC[:zfin,yh1:yh2,xh1:xh2]*drF_exp_hole*rA_exp_hole
+  
+ 
+  #Get total mass of tracer on shelf
+  Total_Vol = np.ma.sum(ShelfVolume) 
+  Total_Vol_Hole = np.ma.sum(HoleVolume) 
+  
+  Total_Vol_ShelfwHole = Total_Vol-Total_Vol_Hole
+  
+  # 1 m^3 = 1000 l
+    
+  return (Total_Vol_ShelfwHole,Total_Vol_Hole)
+
+ 
   
   
   
