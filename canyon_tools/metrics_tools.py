@@ -384,8 +384,30 @@ def Volume_Sh_and_Hole(MaskC,rA,hFacC,drF,yin,zfin,xh1=120,xh2=240,yh1=227,yh2=2
 
  
   
+def maskHC(targetConc,tracer,i1,i2,j1,j2,k1,k2,t1,t2):
+  '''INPUT
+     targetConc : threshold concentration to mask if cell conecntration is lower than.
+     Tracer: tracer  field size [nt,nz,ny,nx] 
+     i1 initial x index, i2 final x index and so on. Integers. 
+     OUTPUT
+     Returns: Mask (true for cells with concntration larger or equal than targerConc.)'''
   
   
+  if i1 == i2:
+    sl = tracer[t1:t2,k1:k2,j1:j2,i1]
+  elif j1==j2:
+    sl = tracer[t1:t2,k1:k2,j1,i1:i2]
+  elif k1 == k2:
+    sl = tracer[t1:t2,k1,j1:j2,i1:i2]
+  elif t1 == t2:
+    sl = tracer[t1,k1:k2,j1:j2,i1:i2]
+  else:
+    sl = tracer[t1:t2,k1:k2,j1:j2,i1:i2]
+  
+  slice_masked = np.ma.masked_less(sl, targetConc) 
+  slice_Mask = slice_masked.mask
+  
+  return slice_Mask
   
   
 
