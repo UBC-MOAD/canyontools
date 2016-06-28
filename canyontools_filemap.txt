@@ -1,0 +1,15 @@
+# File map to create CanyonTools repo from BuildCanyon/PythonModulesMITgcm/
+#
+# The following command was used:
+#  cd BuildingCanyon
+#  hg convert --filemap canyontools_filemap.txt BuildCanyon CanyonTools
+
+include canyontools_filemap.txt
+include PythonModulesMITgcm
+
+rename PythonModulesMITgcm canyon_tools
+rename PythonModulesMITgcm/BathyPythonTools.py canyon_tools/bathy_tools.py
+rename PythonModulesMITgcm/MetricsPythonTools.py canyon_tools/metrics_tools.py
+rename PythonModulesMITgcm/ReadOutTools_MITgcm.py canyon_tools/readout_tools.py
+rename PythonModulesMITgcm/ShelfBreakTools_MITgcm.py canyon_tools/shelfbreak_tools.py
+rename PythonModulesMITgcm/savitzky_golay.py canyon_tools/savitzky_golay.py
