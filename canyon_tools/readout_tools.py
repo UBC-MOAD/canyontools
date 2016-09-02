@@ -53,7 +53,6 @@ def unstagger(ugrid, vgrid):
     """
     u = np.add(ugrid[..., :-1], ugrid[..., 1:]) / 2
     v = np.add(vgrid[..., :-1, :], vgrid[..., 1:, :]) / 2
-    #return u[..., 1:, :], v[..., 1:]
     return u, v
 
 
