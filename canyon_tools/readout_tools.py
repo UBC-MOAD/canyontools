@@ -1,16 +1,7 @@
 # ReadOutput tools MITgcm
 
-import matplotlib.pyplot as plt
-
-from math import *
-
-import numpy as np
-
-import os
-
-from scipy.stats import nanmean
-
 from netCDF4 import Dataset
+import numpy as np
 
 
 def getField(statefile, fieldname):
