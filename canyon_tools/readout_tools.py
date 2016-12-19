@@ -1,13 +1,20 @@
 # ReadOutput tools MITgcm
 
+<<<<<<< local
+from netCDF4 import Dataset
+=======
 import matplotlib.pyplot as plt
 
+>>>>>>> other
 import numpy as np
 
+<<<<<<< local
+=======
 import os
 
 from netCDF4 import Dataset
 
+>>>>>>> other
 
 def getField(statefile, fieldname):
     ''' Get field from MITgcm netCDF output. Field mut be at leat 2-D.
@@ -58,7 +65,6 @@ def unstagger(ugrid, vgrid):
     """
     u = np.add(ugrid[..., :-1], ugrid[..., 1:]) / 2
     v = np.add(vgrid[..., :-1, :], vgrid[..., 1:, :]) / 2
-    #return u[..., 1:, :], v[..., 1:]
     return u, v
 
 

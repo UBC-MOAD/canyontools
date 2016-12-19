@@ -7,7 +7,11 @@ setup(
     description='Useful functions to analyze canyon experiments',
     author='Karina Ramos Musalem',
     author_email='kramosmu@eos.ubc.ca',
-    install_requires=[],
+    install_requires=[
+        "matplotlib",
+        "scipy",
+        "netCDF4",
+    ],
     packages=['canyon_tools'],
 )
 

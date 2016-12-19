@@ -1,14 +1,5 @@
 
-import matplotlib.pyplot as plt
-
-from math import *
-
 import numpy as np
-
-import os
-
-from scipy.stats import nanmean
-
 
 def make_arbitrary_topo_smooth(total_fluid_depth,cR,W,Wsb,L,p,x,x_wall,y,y_base,y_bc,y_sb,y_coast,z_bottom,z_bc,z_sb,z_wall):
   """This function was originally written for python, then translated to matlab. I took the matlab version form Jessica Spurgin's files for MITgcm:
