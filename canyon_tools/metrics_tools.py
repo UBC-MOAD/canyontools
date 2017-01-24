@@ -11,8 +11,10 @@ import scipy.io
 
 import scipy as spy
 
-import canyon_tools.readout_tools as rout 
+import xarray as xr
 
+import canyon_tools.readout_tools as rout 
+ 
 
 #---------------------------------------------------------------------------------------------------------------------------
 def getDatasets(expPath, runName):
@@ -80,6 +82,7 @@ def howMuchWaterX(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi):
                                                 
   -----------------------------------------------------------------------------------------------------------------------
   '''
+  
   maskExp = maskExpand(MaskC,Tr)
 
   TrMask=np.ma.array(Tr,mask=maskExp)   
@@ -112,8 +115,98 @@ def howMuchWaterX(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi):
    # 1 m^3 = 1000 l
     
   return (VolWaterHighConc, Total_Tracer)
+ 
 
-  #---------------------------------------------------------------------------------------------------------------------------
+ # ------------------------------------------------------------------------------------------------------------------------
+def calc_HCW(Tr,MaskC,rA,hFacC,drF,nzlim=29,yin=227,zfin=29,xi=180,yi=50):
+  '''
+  INPUT----------------------------------------------------------------------------------------------------------------
+    Tr    : Array with concentration values for a tracer. Until this function is more general, this should be size 19x90x360x360
+    MaskC : Land mask for tracer
+    nzlim : The nz index under which to look for water properties
+    rA    : Area of cell faces at C points (360x360)
+    fFacC : Fraction of open cell (90x360x360)
+    drF   : Distance between cell faces (90)
+    yin   : across-shore index of shelf break
+    zfin  : shelf break index + 1 
+    xi    : initial profile x index
+    yi    : initial profile y index
+      
+    All dimensions should match.
+   
+   OUTPUT----------------------------------------------------------------------------------------------------------------
+    VolWaterHighConc =  np array with the volume of water with concentration equal or higher than the concentration at Z[nzlim]
+    in the initial volume defined by the dimensions of Tr at every time output.
+  -----------------------------------------------------------------------------------------------------------------------
+  '''
+  maskExp = maskExpand(MaskC,Tr)
+
+  TrMask=np.ma.array(Tr,mask=maskExp)   
+    
+  trlim = TrMask[0,nzlim,yi,xi]
+    
+  print('tracer limit concentration is: ',trlim)
+    
+  WaterX = 0
+    
+  # mask cells with tracer concentration < trlim on shelf
+  HighConc_Masked = np.ma.masked_less(TrMask[:,:zfin,yin:,:], trlim) 
+  HighConc_Mask = HighConc_Masked.mask
+    
+  #Get volume of water of cells with relatively high concentration
+  rA_exp = np.expand_dims(rA[yin:,:],0)
+  drF_exp = np.expand_dims(np.expand_dims(drF[:zfin],1),1)
+  rA_exp = rA_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+  drF_exp = drF_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+    
+  ShelfVolume = hFacC[:zfin,yin:,:]*drF_exp*rA_exp
+  ShelfVolume_exp = np.expand_dims(ShelfVolume,0)
+  ShelfVolume_exp = ShelfVolume_exp + np.zeros(HighConc_Mask.shape)
+    
+  HighConc_CellVol = np.ma.masked_array(ShelfVolume_exp,mask = HighConc_Mask) 
+  VolWaterHighConc = np.ma.sum(np.ma.sum(np.ma.sum(HighConc_CellVol,axis = 1),axis=1),axis=1)
+    
+  return (VolWaterHighConc)
+ 
+ # ---------------------------------------------------------------------------------------------------------------------------
+
+  # ------------------------------------------------------------------------------------------------------------------------
+def calc_TrMassonShelf(Tr,MaskC,rA,hFacC,drF,yin=227,zfin=29):
+  '''
+  INPUT----------------------------------------------------------------------------------------------------------------
+    Tr    : Array with concentration values for a tracer. Until this function is more general, this should be size 19x90x360x360
+    MaskC : Land mask for tracer
+    rA    : Area of cell faces at C points (360x360)
+    fFacC : Fraction of open cell (90x360x360)
+    drF   : Distance between cell faces (90)
+    yin   : across-shore index of shelf break
+    zfin  : shelf break index + 1 
+    
+   All dimensions should match.
+   
+   OUTPUT----------------------------------------------------------------------------------------------------------------
+    Total_Tracer =  np array with the mass of tracer on shelf at every time output.
+  -----------------------------------------------------------------------------------------------------------------------
+  '''
+  maskExp = maskExpand(MaskC,Tr)
+
+  TrMask=np.ma.array(Tr,mask=maskExp)   
+    
+  rA_exp = np.expand_dims(rA[yin:,:],0)
+  drF_exp = np.expand_dims(np.expand_dims(drF[:zfin],1),1)
+  rA_exp = rA_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+  drF_exp = drF_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+    
+  ShelfVolume = hFacC[:zfin,yin:,:]*drF_exp*rA_exp
+  ShelfVolume_exp = np.expand_dims(ShelfVolume,0)
+  ShelfVolume_exp = ShelfVolume_exp + np.zeros(HighConc_Mask.shape)
+    
+   #Get total mass of tracer on shelf
+  Total_Tracer = np.ma.sum(np.ma.sum(np.ma.sum(ShelfVolume_exp*TrMask[:,:zfin,yin:,:]*1000.0,axis = 1),axis=1),axis=1) 
+   # 1 m^3 = 1000 l 
+  return (Total_Tracer)
+ 
+ # ---------------------------------------------------------------------------------------------------------------------------
 
 
 def howMuchWaterCV(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xo,xf):
