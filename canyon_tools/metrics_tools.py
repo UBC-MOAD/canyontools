@@ -230,7 +230,7 @@ def calc_ShelfVolume(rA,hFacC,drF,yin=227,zfin=29):
   rA_exp = rA_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
   drF_exp = drF_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
     
-  ShelfVolume = hFacC[:zfin,yin:,:]*drF_exp*rA_exp
+  ShelfVolume = np.sum(hFacC[:zfin,yin:,:]*drF_exp*rA_exp)
       
   return (ShelfVolume)
  
