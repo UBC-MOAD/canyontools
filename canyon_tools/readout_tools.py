@@ -1,20 +1,11 @@
 # ReadOutput tools MITgcm
 
-<<<<<<< local
 from netCDF4 import Dataset
-=======
+
 import matplotlib.pyplot as plt
 
->>>>>>> other
 import numpy as np
 
-<<<<<<< local
-=======
-import os
-
-from netCDF4 import Dataset
-
->>>>>>> other
 
 def getField(statefile, fieldname):
     ''' Get field from MITgcm netCDF output. Field mut be at leat 2-D.

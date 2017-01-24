@@ -1,15 +1,9 @@
 
 ## Functions to calculate metrics and write them down
 
-from math import *
-
-from MITgcmutils import rdmds
-
 from netCDF4 import Dataset
 
 import numpy as np
-
-import os 
 
 import pylab as pl
 
@@ -17,12 +11,7 @@ import scipy.io
 
 import scipy as spy
 
-import sys
-
-lib_path = os.path.abspath('/ocean/kramosmu/Building_canyon/BuildCanyon/PythonModulesMITgcm') # Add absolute path to my python scripts
-sys.path.append(lib_path)
-
-import ReadOutTools_MITgcm as rout 
+import canyon_tools.readout_tools as rout 
 
 
 #---------------------------------------------------------------------------------------------------------------------------
