@@ -206,10 +206,37 @@ def calc_TrMassonShelf(Tr,MaskC,rA,hFacC,drF,yin=227,zfin=29):
    # 1 m^3 = 1000 l 
   return (Total_Tracer)
  
+ 
+# ------------------------------------------------------------------------------------------------------------------------
+def calc_ShelfVolume(rA,hFacC,drF,yin=227,zfin=29s):
+  '''
+  INPUT----------------------------------------------------------------------------------------------------------------
+    
+    rA    : Area of cell faces at C points (360x360)
+    fFacC : Fraction of open cell (90x360x360)
+    drF   : Distance between cell faces (90)
+    yin   : across-shore index of shelf break
+    zfin  : shelf break index + 1 
+   
+    All dimensions should match.
+   
+   OUTPUT----------------------------------------------------------------------------------------------------------------
+    ShelfVolume =  Volume of shelf
+  -----------------------------------------------------------------------------------------------------------------------
+  '''
+    
+  rA_exp = np.expand_dims(rA[yin:,:],0)
+  drF_exp = np.expand_dims(np.expand_dims(drF[:zfin],1),1)
+  rA_exp = rA_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+  drF_exp = drF_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+    
+  ShelfVolume = hFacC[:zfin,yin:,:]*drF_exp*rA_exp
+      
+  return (ShelfVolume)
+ 
  # ---------------------------------------------------------------------------------------------------------------------------
 
-
-def howMuchWaterCV(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xo,xf):
+ def howMuchWaterCV(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi,xo,xf):
   '''
   INPUT----------------------------------------------------------------------------------------------------------------
     Tr    : Array with concentration values for a tracer. Until this function is more general, this should be size 19x90x360x360
