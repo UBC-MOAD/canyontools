@@ -166,7 +166,7 @@ def calc_HCW(Tr,MaskC,rA,hFacC,drF,nzlim=29,yin=227,xin=120,xfin=359,zfin=29,xi=
   ShelfVolume_exp = ShelfVolume_exp + np.zeros(HighConc_Mask.shape)
     
   HighConc_CellVol = np.ma.masked_array(ShelfVolume_exp,mask = HighConc_Mask) 
-  VolWaterHighConc = np.ma.sum(np.ma.sum(np.ma.sum(HighConc_CellVol,axis = 1),axis=1),axis=1)
+  VolWaterHighConc = np.zeros(np.shape(Tr)[0])+np.ma.sum(np.ma.sum(np.ma.sum(HighConc_CellVol,axis = 1),axis=1),axis=1)
     
   return (VolWaterHighConc)
  
