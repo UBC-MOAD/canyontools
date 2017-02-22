@@ -118,7 +118,7 @@ def howMuchWaterX(Tr,MaskC,nzlim,rA,hFacC,drF,yin,zfin,xi,yi):
  
 
  # ------------------------------------------------------------------------------------------------------------------------
-def calc_HCW(Tr,MaskC,rA,hFacC,drF,nzlim=29,yin=227,zfin=29,xi=180,yi=50):
+def calc_HCW(Tr,MaskC,rA,hFacC,drF,nzlim=29,yin=227,xin=120,xfin=359,zfin=29,xi=180,yi=50):
   '''
   INPUT----------------------------------------------------------------------------------------------------------------
     Tr    : Array with concentration values for a tracer. Until this function is more general, this should be size 19x90x360x360
@@ -128,6 +128,8 @@ def calc_HCW(Tr,MaskC,rA,hFacC,drF,nzlim=29,yin=227,zfin=29,xi=180,yi=50):
     fFacC : Fraction of open cell (90x360x360)
     drF   : Distance between cell faces (90)
     yin   : across-shore index of shelf break
+    xin   : alongshore index first cell of downstram box
+    xin   : alongshore index of final cell of downstream box
     zfin  : shelf break index + 1 
     xi    : initial profile x index
     yi    : initial profile y index
@@ -150,16 +152,16 @@ def calc_HCW(Tr,MaskC,rA,hFacC,drF,nzlim=29,yin=227,zfin=29,xi=180,yi=50):
   WaterX = 0
     
   # mask cells with tracer concentration < trlim on shelf
-  HighConc_Masked = np.ma.masked_less(TrMask[:,:zfin,yin:,:], trlim) 
+  HighConc_Masked = np.ma.masked_less(TrMask[:,:zfin,yin:,xin:xfin], trlim) 
   HighConc_Mask = HighConc_Masked.mask
     
   #Get volume of water of cells with relatively high concentration
-  rA_exp = np.expand_dims(rA[yin:,:],0)
+  rA_exp = np.expand_dims(rA[yin:,xin:xfin],0)
   drF_exp = np.expand_dims(np.expand_dims(drF[:zfin],1),1)
-  rA_exp = rA_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
-  drF_exp = drF_exp + np.zeros(hFacC[:zfin,yin:,:].shape)
+  rA_exp = rA_exp + np.zeros(hFacC[:zfin,yin:,xin:xfin].shape)
+  drF_exp = drF_exp + np.zeros(hFacC[:zfin,yin:,xin:xfin].shape)
     
-  ShelfVolume = hFacC[:zfin,yin:,:]*drF_exp*rA_exp
+  ShelfVolume = hFacC[:zfin,yin:,xin:xfin]*drF_exp*rA_exp
   ShelfVolume_exp = np.expand_dims(ShelfVolume,0)
   ShelfVolume_exp = ShelfVolume_exp + np.zeros(HighConc_Mask.shape)
     
