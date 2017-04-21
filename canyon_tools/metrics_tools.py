@@ -145,8 +145,11 @@ def calc_HCW(Tr,MaskC,rA,hFacC,drF,nzlim=29,yin=227,xin=120,xfin=359,zfin=29,xi=
 
   TrMask=np.ma.array(Tr,mask=maskExp)   
     
-  trlim = TrMask[0,nzlim,yi,xi]
-    
+  trlim1 = TrMask[0,nzlim,yi,xi]
+  trlim2 = TrMask[0,nzlim+1,yi,xi] 
+  
+  trlim = (trlim1+trlim2)/2  # Average concentration between shelf break and cell below
+  
   print('tracer limit concentration is: ',trlim)
     
   WaterX = 0
