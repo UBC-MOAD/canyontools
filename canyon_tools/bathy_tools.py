@@ -120,14 +120,15 @@ def canyontopo(total_fluid_depth,L,y,y_sb,y_coast,z_sb,z_wall):
            
     elif y[ii] > yc_1200 and y[ii]<= y_L: #yc_1000:
       topo_cp[ii] = ((1200-z_sb)/(y_L-yc_1200))*y[ii] + 0 - ((1200-z_sb)/(y_L-yc_1200))*yc_1200
-                    
+                   
     elif y[ii] > y_L and y[ii] < y_coast :      
       topo_cp[ii] =  ((z_sb-z_wall)/(y_coast-yc_L))*y[ii] + z_sb - ((z_sb-z_wall)/(y_coast-yc_L))*y_L #0.26
-          
+     
     elif y[ii] >= y_coast:
       topo_cp[ii] = z_wall
-        
+    print(((1200-z_sb)/(y_L-yc_1200)))     
     # subtract total fluid depth
+    print(((z_sb-z_wall)/(y_coast-yc_L)))     
     canyon_profile[ii] = topo_cp[ii]-total_fluid_depth
  
   return canyon_profile
